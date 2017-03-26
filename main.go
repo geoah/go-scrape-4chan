@@ -50,33 +50,35 @@ func main() {
 		log.Println("*** Could not get boards", err)
 		os.Exit(1)
 	}
-	for _, board := range boards {
-		fmt.Println("> Going through board:", board.Board)
+	for ib, board := range boards {
+		fmt.Printf("> Going through /%s/ (%d out of %d)\n", board.Board, ib+1, len(boards))
 		threads, err := getThreads(board.Board, true)
 		if err != nil {
 			log.Println("*** Could not get threads:", err)
 			continue
 		}
-		for _, thread := range threads {
+		for it, thread := range threads {
 			thread.ID = fmt.Sprintf("%s/%d", board.Board, thread.No)
 			thread.Board = board.Board
+
+			fmt.Printf(">> Going through thread %s (archived: %t) (%d out of %d)\n", thread.ID, thread.Archived, it+1, len(threads))
+
 			if oThread, err := persistence.GetThread(thread.ID); err != nil {
 				if err != r.ErrEmptyResult {
 					fmt.Println("*** Could not get thread:", err)
 				}
 			} else {
 				if oThread.Archived {
-					fmt.Println(">> Skipping thread (archived and already indexed):", thread.ID)
+					fmt.Println(">>> Skipping thread (archived and already indexed):", thread.ID)
 					continue
 				}
 				if thread.Archived == false {
 					if oThread.LastModified >= thread.LastModified {
-						fmt.Println(">> Skipping thread (not modified):", thread.ID)
+						fmt.Println(">>> Skipping thread (not modified):", thread.ID)
 						continue
 					}
 				}
 			}
-			fmt.Println(">> Going through thread:", thread.ID, "archived:", thread.Archived)
 			posts, err := getPosts(board.Board, thread.No)
 			if err != nil {
 				log.Println("*** Could not get posts", err)
